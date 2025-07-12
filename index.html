@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>イージールーレット</title>
+
+    <!-- すべて同じフォルダ (index.html と同階層) に配置したファイルを参照しています -->
+    <link rel="icon" href="favicon.png" type="image/png">          <!-- 32×32 などの PNG -->
+    <link rel="icon" href="favicon.ico" sizes="any">               <!-- 予備 .ico (任意) -->
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">       <!-- 可変 SVG (任意) -->
+    <link rel="apple-touch-icon" href="favicon.png">         <!-- iOS / iPadOS 用 (任意) -->
+   
+
+    <!-- LIFF SDK (LINE Front‑end Framework) -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
+
+    <!-- 外部スタイルシート -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header id="navbar">
+        <button id="homeBtn">ホーム</button>
+    </header>
+
+    <!-- メイン描画エリア -->
+    <main id="app"></main>
+
+    <!-- ====== 各種テンプレート ====== -->
+    <!-- フォームテンプレート -->
+    <template id="form-template">
+        <div class="container">
+            <h1>イージールーレット</h1>
+            <p style="margin-bottom:0.75rem">メンバー名を <strong>2〜10 名</strong> 入力してください。</p>
+            <div id="errorBox" class="error" style="display:none"></div>
+            <form id="itemForm" autocomplete="off">
+                <div id="itemInputs"></div>
+                <button type="button" id="addItem">＋ メンバー追加</button>
+                <br />
+                <button type="submit" id="startBtn" style="margin-top:0.6rem">ルーレット開始 ▶︎</button>
+            </form>
+
+            <!-- ホーム履歴表示 -->
+            <section id="homeHistorySection" style="margin-top:2rem; text-align:left; display:none;">
+                <h2 style="font-size:1.2rem; margin-bottom:0.6rem;">過去の結果</h2>
+                <ul id="homeHistoryList" class="clean"></ul>
+            </section>
+        </div>
+    </template>
+
+    <!-- ルーレットテンプレート -->
+    <template id="roulette-template">
+        <div class="roulette-container">
+            <h1>ルーレット</h1>
+            <div class="roulette-wrapper" style="margin:2rem auto 1.2rem;">
+                <canvas id="wheel" width="320" height="320"></canvas>
+                <div class="pointer">▼</div>
+            </div>
+            <button id="spinBtn">回す！</button>
+        </div>
+    </template>
+
+    <!-- 結果テンプレート -->
+    <template id="result-template">
+        <div class="result">
+            <h2 id="winnerText"></h2>
+            <button id="retryBtn" style="margin-right:0.6rem">もう一度回す</button>
+        </div>
+    </template>
+
+    <!-- 履歴テンプレート -->
+    <template id="history-template">
+        <div class="history">
+            <h1>過去の結果</h1>
+            <ul id="historyList" class="clean" style="margin:1rem 0"></ul>
+            <button id="backBtn">戻る</button>
+        </div>
+    </template>
+
+    <!-- LZ‑String (文字列圧縮/展開) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
+
+    <!-- アプリ本体 -->
+    <script src="main.js" defer></script>
+</body>
+</html>
