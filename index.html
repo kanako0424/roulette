@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>担当者ルーレット</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            /* indigo-500 */
+            --primary-dark: #4f46e5;
+            /* indigo-600 */
+            --bg: #f8fafc;
+            /* slate-50  */
+            --text: #1f2937;
+            /* slate-800 */
+            --danger: #e11d48;
+            /* rose-600  */
+            --nav-height: 58px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: calc(var(--nav-height) + 1.5rem) 1.2rem 2rem;
+        }
+
+        /* ---------------- ナビゲーション ---------------- */
+        #navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--nav-height);
+            background: #ffffffcc;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            z-index: 1000;
+        }
+
+        #homeBtn {
+            cursor: pointer;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.45rem 1rem;
+            font-size: 0.95rem;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        #homeBtn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        #homeBtn:active {
+            transform: translateY(0);
+        }
+
+        /* ---------------- 汎用 ---------------- */
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            cursor: pointer;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.6rem 1.4rem;
+            font-size: 1rem;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .container,
+        .roulette-container,
+        .result,
+        .history {
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            background: #fff;
+            padding: 2rem 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 0.5s ease;
+        }
+
+        #itemInputs input {
+            width: 100%;
+            padding: 0.55rem 0.8rem;
+            margin-bottom: 0.6rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.4rem;
+            font-size: 1rem;
+        }
+
+        #addItem {
+            background: #e2e8f0;
+            /* slate-200 */
+            color: #334155;
+            /* slate-700 */
+            margin-bottom: 1rem;
+        }
+
+        #addItem:hover {
+            background: #cbd5e1;
+        }
+
+        .error {
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -26px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.6rem;
+            color: var(--primary);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+            animation: bounce 1.2s infinite ease-in-out;
+            user-select: none;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translate(-50%, 0);
+            }
+
+            50% {
+                transform: translate(-50%, -4px);
+            }
+        }
+
+        .roulette-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 履歴リスト */
+        ul.clean {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        ul.clean li {
+            padding: 0.3rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header id="navbar">
+        <button id="homeBtn">ホーム</button>
+    </header>
+
+    <main id="app"></main>
+
+    <!-- フォームテンプレート -->
+    <template id="form-template">
+        <div class="container">
+            <h1>担当者ルーレット</h1>
+            <p style="margin-bottom:0.75rem">メンバー名を <strong>2〜10 名</strong> 入力してください。</p>
+            <div id="errorBox" class="error" style="display:none"></div>
+            <form id="itemForm" autocomplete="off">
+                <div id="itemInputs"></div>
+                <button type="button" id="addItem">＋ メンバー追加</button>
+                <br />
+                <button type="submit" id="startBtn" style="margin-top:0.6rem">ルーレット開始 ▶︎</button>
+            </form>
+
+            <!-- ホーム履歴表示 -->
+            <section id="homeHistorySection" style="margin-top:2rem; text-align:left; display:none;">
+                <h2 style="font-size:1.2rem; margin-bottom:0.6rem;">過去の結果</h2>
+                <ul id="homeHistoryList" class="clean"></ul>
+            </section>
+        </div>
+    </template>
+
+    <!-- ルーレットテンプレート -->
+    <template id="roulette-template">
+        <div class="roulette-container">
+            <h1>ルーレット</h1>
+            <div class="roulette-wrapper" style="margin:2rem auto 1.2rem;">
+                <canvas id="wheel" width="320" height="320"></canvas>
+                <div class="pointer">▼</div>
+            </div>
+            <button id="spinBtn">回す！</button>
+        </div>
+    </template>
+
+    <!-- 結果テンプレート -->
+    <template id="result-template">
+        <div class="result">
+            <h2 id="winnerText"></h2>
+            <button id="retryBtn" style="margin-right:0.6rem">もう一度回す</button>
+            <!-- <button id="historyBtn">履歴を見る</button> -->
+        </div>
+    </template>
+
+    <!-- 履歴テンプレート -->
+    <template id="history-template">
+        <div class="history">
+            <h1>過去の結果</h1>
+            <ul id="historyList" class="clean" style="margin:1rem 0"></ul>
+            <button id="backBtn">戻る</button>
+        </div>
+    </template>
+
+    <!-- LZ-String Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+
+    <!-- Main Script -->
+    <script>
+        /* ---------- 定数 ---------- */
+        const canvasSize = 320;
+        const STORAGE_KEY = 'rouletteHistory';
+
+        /* HTMLエスケープ */
+        // & < > " ' を HTML エンティティ化して XSS を防ぐ
+        function escapeHtml(str) {
+            return (str || '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[c]));
+        }
+
+        /* ---------- 初期 URL デコード ---------- */
+        const qs = new URLSearchParams(location.search);
+        let paramsItems = [];
+        const raw = qs.get('d');
+        if (raw) {
+            try {
+                const decoded = LZString.decompressFromEncodedURIComponent(raw);
+                paramsItems = JSON.parse(decoded || '[]').map(sanitize).slice(0, 10);
+            } catch (e) {
+                console.warn('Failed to decode params', e);
+            }
+        }
+
+        /* ---------- DOM キャッシュ ---------- */
+        const app = document.getElementById('app');
+        const homeBtn = document.getElementById('homeBtn');
+        const templates = {
+            form: document.getElementById('form-template'),
+            roulette: document.getElementById('roulette-template'),
+            result: document.getElementById('result-template'),
+            history: document.getElementById('history-template'),
+        };
+
+        /* ---------- 状態 ---------- */
+        let items = [...paramsItems];
+
+        /* ---------- ヘッダー操作 ---------- */
+        homeBtn.addEventListener('click', () => {
+            items = [];
+            history.replaceState(null, '', location.pathname);
+            renderForm();
+        });
+
+        /* ---------- ルーレット描画 ---------- */
+        function drawWheel(rotation) {
+            const canvas = document.getElementById('wheel');
+            const ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+            ctx.translate(canvasSize / 2, canvasSize / 2);
+            ctx.rotate(rotation);
+            const angle = (2 * Math.PI) / items.length;
+            for (let i = 0; i < items.length; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, canvasSize / 2, i * angle, (i + 1) * angle);
+                ctx.closePath();
+                ctx.fillStyle = `hsl(${(i * 360) / items.length},70%,70%)`;
+                ctx.fill();
+                ctx.save();
+                ctx.rotate(i * angle + angle / 2);
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#374151';
+                ctx.font = 'bold 16px "Noto Sans JP", sans-serif';
+                ctx.fillText(items[i], canvasSize / 2 - 14, 0);
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        let angVel = 0, ang = 0, spinning = false;
+        function startSpin() {
+            if (spinning) return;
+            spinning = true;
+            angVel = Math.random() * 0.28 + 0.32;
+            requestAnimationFrame(frame);
+        }
+        function frame() {
+            if (!spinning) return;
+            ang += angVel;
+            ang %= 2 * Math.PI;
+            angVel *= 0.984;
+            drawWheel(ang);
+            if (angVel < 0.002) {
+                spinning = false;
+                const winnerIndex = items.length - Math.floor(((ang % (2 * Math.PI)) / (2 * Math.PI)) * items.length) - 1;
+                saveHistory(items, items[winnerIndex]);
+                renderResult(items[winnerIndex]);
+            } else {
+                requestAnimationFrame(frame);
+            }
+        }
+
+        /* ---------- History ---------- */
+        function getHistory() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            } catch {
+                return [];
+            }
+        }
+        function saveHistory(allItems, winner) {
+            const hist = getHistory();
+            hist.unshift({ ts: Date.now(), winner, all: [...allItems] });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(hist.slice(0, 50)));
+        }
+        function renderHistoryList(ul) {
+            ul.innerHTML = '';
+            const hist = getHistory();
+            if (hist.length === 0) {
+                ul.innerHTML = '<li>履歴はまだありません。</li>';
+                return;
+            }
+            hist.forEach(h => {
+                const li = document.createElement('li');
+                const date = new Date(h.timestamp).toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                const allNames = (h.items || h.all || []).map(escapeHtml).join(', ');
+                li.innerHTML = `<strong>${date} ▶︎ ${escapeHtml(h.winner)}</strong><br><small>${allNames}</small>`;
+                ul.appendChild(li);
+            });
+        }
+
+        /* ---------- 画面レンダリング ---------- */
+        function renderForm() {
+            app.innerHTML = '';
+            const node = templates.form.content.cloneNode(true);
+            app.appendChild(node);
+
+            const inputsArea = document.getElementById('itemInputs');
+            const addItemBtn = document.getElementById('addItem');
+            const formEl = document.getElementById('itemForm');
+            const errorBox = document.getElementById('errorBox');
+
+            // 初期入力欄 3 つ
+            const initCount = Math.max(3, items.length || 0);
+            for (let i = 0; i < initCount; i++) addInput(i);
+
+            // 値を復元
+            inputsArea.querySelectorAll('input').forEach((inp, idx) => {
+                inp.value = items[idx] || '';
+            });
+
+            addItemBtn.addEventListener('click', () => addInput(inputsArea.children.length));
+
+            formEl.onsubmit = e => {
+                e.preventDefault();
+                const arr = [...inputsArea.querySelectorAll('input')].map(i => sanitize(i.value));
+                const valid = arr.filter(Boolean);
+                if (valid.length < 2) {
+                    errorBox.textContent = '2名以上入力してください。';
+                    errorBox.style.display = 'block';
+                    return;
+                }
+                errorBox.style.display = 'none';
+                items = valid.slice(0, 10);
+                const encoded = LZString.compressToEncodedURIComponent(JSON.stringify(items));
+                history.replaceState(null, '', `${location.pathname}?d=${encoded}`);
+                renderRoulette();
+            };
+
+            /* 履歴をホームにも表示 */
+            const homeHistSection = document.getElementById('homeHistorySection');
+            const homeHistList = document.getElementById('homeHistoryList');
+            renderHistoryList(homeHistList);
+            if (homeHistList.childElementCount) homeHistSection.style.display = 'block';
+
+            function addInput(idx) {
+                if (inputsArea.children.length >= 10) return;
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.placeholder = `メンバー${idx + 1}`;
+                inputsArea.appendChild(inp);
+            }
+        }
+
+        function renderRoulette() {
+            app.innerHTML = '';
+            const node = templates.roulette.content.cloneNode(true);
+            app.appendChild(node);
+            drawWheel(0);
+            document.getElementById('spinBtn').addEventListener('click', startSpin);
+        }
+
+        function renderResult(winner) {
+            app.innerHTML = '';
+            const node = templates.result.content.cloneNode(true);
+            app.appendChild(node);
+            document.getElementById('winnerText').textContent = `${winner} さんに決定！`;
+            document.getElementById('retryBtn').addEventListener('click', () => renderRoulette());
+            // document.getElementById('historyBtn').addEventListener('click', () => renderHistory());
+        }
+
+        function renderHistory() {
+            app.innerHTML = '';
+            const node = templates.history.content.cloneNode(true);
+            app.appendChild(node);
+            const ul = document.getElementById('historyList');
+            renderHistoryList(ul);
+            document.getElementById('backBtn').addEventListener('click', () => renderForm());
+        }
+
+        /* ---------- Util ---------- */
+        function sanitize(str) {
+            return (str || '').trim().replace(/[<>"']/g, '');
+        }
+
+        /* ---------- 初期ロード ---------- */
+        if (items.length >= 2) {
+            renderRoulette();
+        } else {
+            renderForm();
+        }
+    </script>
+</body>
+
+</html>
