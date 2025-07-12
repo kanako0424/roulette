@@ -5,6 +5,35 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>イージールーレット</title>
+
+    <!-- LZ-String （順序はどちらでも可）-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
+
+    <!-- LIFF SDK  ※defer を付ける -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
+
+    <!-- メインスクリプト  ※必ず SDK より後に読み込み →
+       defer が付いていれば HTML 解析完了後に順番どおり実行される -->
+    <script defer>
+        // defer 版なら <body> の前でも OK
+        document.addEventListener('DOMContentLoaded', () => {
+            // SDK が読み込まれていればここで window.liff が存在する
+            if (!window.liff) {
+                console.error('LIFF SDK not loaded');
+                return;
+            }
+
+            // liff.ready (v2.17+) を待つとなお安全
+            liff.ready.then(() => {
+                liff.init({
+                    liffId: 'YOUR_LIFF_ID',
+                    withLoginOnExternalBrowser: true,
+                }).then(() => {
+                    console.log('LIFF init success');
+                }).catch(console.error);
+            });
+        });
+    </script>
     <style>
         :root {
             --primary: #6366f1;
@@ -262,30 +291,13 @@
         </div>
     </template>
 
-    <!-- LZ-String Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-
-    <!-- LIFF SDK -->
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2/sdk.js"></script>
-
-
     <!-- Main Script -->
-    <script>
+    <script defer>
         /* ---------- 定数 ---------- */
         const canvasSize = 320;
         const STORAGE_KEY = 'rouletteHistory';
 
-        /* ---------- LIFF 初期化 ---------- */
-        liff.init({
-            liffId: "2007738867-wPJ2rxV0", // Use own liffId
-            withLoginOnExternalBrowser: true, // Enable automatic login process
-        })
-        .then(() => {
-            // Start to use liff's api
-        });
-
-
-        /* HTMLエスケープ */
+        /* ---------- HTMLエスケープ ---------- */
         // & < > " ' を HTML エンティティ化して XSS を防ぐ
         function escapeHtml(str) {
             return (str || '').replace(/[&<>"']/g, c => ({
