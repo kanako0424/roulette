@@ -1,18 +1,28 @@
 /* ---------- LIFF 初期化 ---------- */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (!window.liff) {
         console.error('LIFF SDK not loaded');
         return;
     }
 
-    liff.ready.then(() => {
-        liff.init({
-            liffId: '2007738867-wPJ2rxV0',
-            withLoginOnExternalBrowser: true,
-        }).then(() => {
-            console.log('LIFF init success');
-        }).catch(console.error);
-    });
+    try {
+        await liff.init({
+            liffId: '2007738867-wPJ2rxV0',      // ← ご自身の LIFF ID
+            withLoginOnExternalBrowser: true,  // 外部ブラウザなら自動で liff.login()
+        })
+        .then(() => {
+            if (!liff.isLoggedIn()) {
+                liff.login({
+                    redirectUri: window.location.href,
+                });
+            }
+            console.log('URL after init:', window.location.href); // ← ここで ?d=... が見えるはず
+        });
+        console.log('LIFF init success');
+        // ここで location.search には ?d=NoIk%2B... が復元済み
+    } catch (err) {
+        console.error('LIFF init failed', err);
+    }
 });
 
 /* ---------- アプリ本体 ---------- */
@@ -39,7 +49,7 @@ if (raw) {
         // LZString のロード遅延やデコード失敗に備えてフォールバック
         const decodedStr = (typeof LZString !== 'undefined' &&
             (LZString.decompressFromEncodedURIComponent(raw) ||
-             LZString.decompress(raw))) || '';
+                LZString.decompress(raw))) || '';
         if (decodedStr) items = JSON.parse(decodedStr).map(sanitize).slice(0, 10);
     } catch (e) {
         console.warn('Failed to decode params', e);
