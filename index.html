@@ -265,11 +265,25 @@
     <!-- LZ-String Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
 
+    <!-- LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2/sdk.js"></script>
+
+
     <!-- Main Script -->
     <script>
         /* ---------- 定数 ---------- */
         const canvasSize = 320;
         const STORAGE_KEY = 'rouletteHistory';
+
+        /* ---------- LIFF 初期化 ---------- */
+        liff.init({
+            liffId: "2007738867-wPJ2rxV0", // Use own liffId
+            withLoginOnExternalBrowser: true, // Enable automatic login process
+        })
+        .then(() => {
+            // Start to use liff's api
+        });
+
 
         /* HTMLエスケープ */
         // & < > " ' を HTML エンティティ化して XSS を防ぐ
